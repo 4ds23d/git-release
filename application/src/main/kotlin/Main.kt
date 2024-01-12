@@ -42,6 +42,7 @@ class CommandLineApp : CliktCommand() {
     private val developBranch: String by option().default("develop").help("Develop branch name")
     private val workingPath by option().path().default(Path.of(".")).help("Repository path")
     private val showTickets by option().flag(default = true).help("Show ticket jira from commits")
+    private val showCommits by option().flag(default = true).help("Show commits")
 
     override fun run() {
         val gitSettings = GitSettings(workingPath, releaseBranch, developBranch)
@@ -50,10 +51,20 @@ class CommandLineApp : CliktCommand() {
         echo("Starting working in Git repository: ${gitSettings.path.toAbsolutePath()}")
 
         val unmergeBranches = gitInfo.findUnmergeBranches()
-        if (showTickets) {
+
+        if (showTickets || showCommits) {
             val branchFrom = MultipleChoice.build(unmergeBranches.filter { !gitSettings.isReleaseBranch(it.target) },
-                                 prefix="Unmerge branches")
-            echo(gitInfo.findWorkingTickets(branchFrom))
+                prefix="Unmerge branches")
+
+            if (showCommits) {
+                echo("Commits: ")
+                echo(gitInfo.findWorkingCommits(branchFrom).withIndex().joinToString("\n"){ (index, value) -> "${index + 1}: $value" })
+            }
+
+            if (showTickets) {
+                echo("Detected tickets")
+                echo(gitInfo.findWorkingTickets(branchFrom).map { it.name })
+            }
         }
 
         unmergeBranches.forEach {

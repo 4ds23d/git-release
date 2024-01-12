@@ -2,7 +2,7 @@ package org.example.commands
 
 import java.util.function.Predicate
 
-enum class BranchFilter(private val regex: Regex) : Predicate<String> {
+internal enum class BranchFilter(private val regex: Regex) : Predicate<String> {
     RELEASE("""^release/.*""".toRegex()),
     HOTFIX("""^hotfix/.*""".toRegex());
 

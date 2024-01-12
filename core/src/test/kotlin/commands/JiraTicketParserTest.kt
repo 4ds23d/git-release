@@ -2,6 +2,7 @@ package commands
 
 
 import org.assertj.core.api.Assertions.assertThat
+import org.example.Ticket
 import org.example.ticket.JiraTicketParser
 import org.example.ticket.TicketParser
 import org.junit.jupiter.api.Test
@@ -32,6 +33,6 @@ class JiraTicketParserTest {
 
         // then
         assertThat(results)
-            .containsExactlyInAnyOrderElementsOf(expectedTickets.split(","))
+            .containsExactlyInAnyOrderElementsOf(expectedTickets.split(",").map { Ticket(it) })
     }
 }

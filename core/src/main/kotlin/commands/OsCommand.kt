@@ -7,7 +7,7 @@ import java.io.InputStreamReader
 import java.nio.file.Path
 
 
-class OsCommand(private var command: String,
+internal class OsCommand(private var command: String,
                 private var path: Path
 ) {
     private val logger = KotlinLogging.logger {}
@@ -28,7 +28,7 @@ class OsCommand(private var command: String,
             val reader = BufferedReader(InputStreamReader(process.inputStream))
             var line: String?
 
-            val response = mutableListOf<String>();
+            val response = mutableListOf<String>()
 
             while (reader.readLine().also { line = it } != null) {
                 line.let { response.add(it!!) }
@@ -55,13 +55,12 @@ class OsCommand(private var command: String,
     }
 }
 
-class OsCommandException(response: OsCommandResponse) : Exception(response.toString())
+internal class OsCommandException(response: OsCommandResponse) : Exception(response.toString())
 
-class OsCommandResponse(val response: List<String>,
+internal class OsCommandResponse(val response: List<String>,
                         private val statusCode: Int)  {
 
     fun isSuccess(): Boolean = statusCode == 0
-    fun isFailure(): Boolean = !isSuccess()
 
     override fun toString(): String {
         return "Status: ${statusCode}\n $response"

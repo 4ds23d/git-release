@@ -3,7 +3,7 @@ package org.example.commands
 import org.example.UnmergeBranch
 import java.nio.file.Path
 
-class MergeCommand(private val workingDirectory: Path) {
+internal class MergeCommand(private val workingDirectory: Path) {
 
     fun execute(branch: UnmergeBranch) {
         OsCommand("git checkout ${branch.target}", workingDirectory).executeOrThrow()

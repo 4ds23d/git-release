@@ -1,6 +1,7 @@
 import org.assertj.core.api.Assertions.assertThat
 import org.example.GitInfo
 import org.example.GitSettings
+import org.example.Ticket
 import org.example.UnmergeBranch
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -27,7 +28,12 @@ class GitInfoTest {
         val workingTickets = gitInfo.findWorkingTickets()
 
         // then
-        assertThat(workingTickets).containsExactlyInAnyOrder("ABC-4", "ABC-1", "ABC-2", "FIX-123")
+        assertThat(workingTickets).containsExactlyInAnyOrder(
+            Ticket("ABC-4"),
+            Ticket("ABC-1"),
+            Ticket("ABC-2"),
+            Ticket("FIX-123"))
+
     }
 
     @Test
@@ -40,7 +46,7 @@ class GitInfoTest {
         val workingTickets = gitInfo.findWorkingTickets()
 
         // then
-        assertThat(workingTickets).containsExactlyInAnyOrder("ABC-3")
+        assertThat(workingTickets).containsExactlyInAnyOrder(Ticket("ABC-3"))
     }
 
     @Test

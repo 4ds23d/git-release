@@ -8,12 +8,18 @@ import org.example.ticket.JiraTicketParser
 
 class GitInfo(private val settings: GitSettings) {
 
-    fun findWorkingTickets(from: String? = null): List<String> {
+    fun findWorkingTickets(from: String? = null): List<Ticket> {
         val command = FindUnmergeCommits(settings.path)
         return command.commitMessages(settings.releaseBranch, from ?: settings.developBranch)
-            .map { it.log }
+            .map { it.messageLog }
             .flatMap { JiraTicketParser().findTickets(it) }
             .distinct()
+    }
+
+    fun findWorkingCommits(from: String? = null): List<Commit> {
+        val command = FindUnmergeCommits(settings.path)
+        return command.commitMessages(settings.releaseBranch, from ?: settings.developBranch)
+            .map { Commit(it.messageLog) }
     }
 
     fun findUnmergeBranches(): List<UnmergeBranch> {
@@ -51,5 +57,7 @@ class GitInfo(private val settings: GitSettings) {
 
 }
 
-data class Branch(val name: String);
+data class Commit(val name: String)
+data class Ticket(val name: String)
+data class Branch(val name: String)
 data class UnmergeBranch(val target: String, val from: String)
