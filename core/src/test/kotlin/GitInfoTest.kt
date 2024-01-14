@@ -1,12 +1,12 @@
 import org.assertj.core.api.Assertions.assertThat
-import org.example.GitInfo
-import org.example.GitSettings
-import org.example.Ticket
-import org.example.UnmergeBranch
+import org.example.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import util.ApplicationPath
 import util.SetupEnvironment
+import java.io.File
+import java.io.PrintWriter
+import java.nio.file.Path
 
 class GitInfoTest {
 
@@ -21,7 +21,7 @@ class GitInfoTest {
     @Test
     fun identifyJiraTicketsThatNeedsToBeMergeToMainFromDevelop() {
         // given
-        val settings = GitSettings(applicationPath.gitTest1(), "main", "develop")
+        val settings = GitSettings(applicationPath.gitTest1(), Branch("main"),  Branch("develop"))
 
         // when
         val gitInfo = GitInfo(settings)
@@ -37,9 +37,30 @@ class GitInfoTest {
     }
 
     @Test
+    fun detectUncommitedChanges() {
+        // given
+        val settings = GitSettings(applicationPath.gitTest1(), Branch("main"),  Branch("develop"))
+
+        // when
+        val gitInfo = GitInfo(settings)
+        assertThat(gitInfo.hasUncommitedChanges()).isFalse()
+
+        // when create file
+        createFile()
+        assertThat(gitInfo.hasUncommitedChanges()).isTrue()
+    }
+
+    private fun createFile() {
+        val file = File(Path.of(applicationPath.gitTest1().toString(), "test.txt").toString())
+        PrintWriter(file.writer()).use { writer ->
+            writer.println("Hello, this is the content of the file!")
+        }
+    }
+
+    @Test
     fun identifyJiraTicketsThatNeedsToBeMergeToDevelopFromFeature_ABC_3() {
         // given
-        val settings = GitSettings(applicationPath.gitTest1(), "develop", "feature/ABC-3")
+        val settings = GitSettings(applicationPath.gitTest1(), Branch("develop"), Branch("feature/ABC-3"))
 
         // when
         val gitInfo = GitInfo(settings)
@@ -52,7 +73,7 @@ class GitInfoTest {
     @Test
     fun unmergeBranches() {
         // given
-        val settings = GitSettings(applicationPath.gitTest1(), "main", "develop")
+        val settings = GitSettings(applicationPath.gitTest1(), Branch("main"), Branch("develop"))
 
         // when
         val gitInfo = GitInfo(settings)
@@ -60,15 +81,15 @@ class GitInfoTest {
 
         // then
         assertThat(unmergeBranches).containsExactlyInAnyOrder(
-            UnmergeBranch("main", "release/r1"),
-            UnmergeBranch("develop", "release/r1"),
+            UnmergeBranch(Branch("main"), Branch("release/r1")),
+            UnmergeBranch(Branch("develop"), Branch("release/r1")),
         )
     }
 
     @Test
     fun findUnmergeBranchesAndMergeIt() {
         // given
-        val settings = GitSettings(applicationPath.gitTest1(), "main", "develop")
+        val settings = GitSettings(applicationPath.gitTest1(), Branch("main"), Branch("develop"))
 
         // when
         val gitInfo = GitInfo(settings)

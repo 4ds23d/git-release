@@ -3,11 +3,19 @@ set -e
 
 SCRIPT_PATH=$(dirname "$(realpath "$0")")
 DIR_PATH=$SCRIPT_PATH/../../build/test1
+DIR_REMOTE_PATH=$SCRIPT_PATH/../../build/test1-remote
 
 if [ -d $DIR_PATH/.git ]; then
  echo "Reset git"
- rm -rf $DIR_PATH/.git
+ rm -rf $DIR_PATH
+ rm -rf $DIR_REMOTE_PATH
 fi
+
+
+mkdir -p $DIR_REMOTE_PATH
+cd $DIR_REMOTE_PATH
+git init . --bare
+echo "Init bare repository"
 
 mkdir -p $DIR_PATH
 cd $DIR_PATH
@@ -35,6 +43,9 @@ git checkout -b release/r1
 create_change "ABC-6 r1"
 git checkout -b feature/ABC-5 develop
 create_change "ABC-5 implement change"
+
+git remote add origin $DIR_REMOTE_PATH
+git push --all origin
 
 
 

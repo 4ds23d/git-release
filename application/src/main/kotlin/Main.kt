@@ -23,7 +23,7 @@ class MultipleChoice(choices: Map<String, String>, prompt: String) : CliktComman
     companion object {
         fun build(choices: List<UnmergeBranch>, prefix: String): String {
             val map = choices
-                .map { it.from }
+                .map { it.from.name }
                 .sorted()
                 .withIndex()
                 .associate { (index, value) -> (index + 1).toString() to value }
@@ -45,33 +45,42 @@ class CommandLineApp : CliktCommand() {
     private val showCommits by option().flag(default = true).help("Show commits")
 
     override fun run() {
-        val gitSettings = GitSettings(workingPath, releaseBranch, developBranch)
+        val gitSettings = GitSettings(workingPath, Branch(releaseBranch), Branch(developBranch))
         val gitInfo = GitInfo(gitSettings)
 
         echo("Starting working in Git repository: ${gitSettings.path.toAbsolutePath()}")
 
-        val unmergeBranches = gitInfo.findUnmergeBranches()
-
-        if (showTickets || showCommits) {
-            val branchFrom = MultipleChoice.build(unmergeBranches.filter { !gitSettings.isReleaseBranch(it.target) },
-                prefix="Unmerge branches")
-
-            if (showCommits) {
-                echo("Commits: ")
-                echo(gitInfo.findWorkingCommits(branchFrom).withIndex().joinToString("\n"){ (index, value) -> "${index + 1}: $value" })
-            }
-
-            if (showTickets) {
-                echo("Detected tickets")
-                echo(gitInfo.findWorkingTickets(branchFrom).map { it.name })
-            }
+        if (gitInfo.hasUncommitedChanges()) {
+            echo("Aborting - Detected uncommited changes")
+            return
         }
 
-        unmergeBranches.forEach {
-            val prompt = YesOrNoPrompt("Would you like to merge branch ${it.from} -> ${it.target} ")
-            prompt.main(listOf())
-            if (prompt.answerer) {
-                gitInfo.mergeBranches(listOf(it))
+        gitInfo.pullBranch(gitSettings.developBranch)
+        gitInfo.pullBranch (gitSettings.releaseBranch)
+
+        val unmergeBranches = gitInfo.findUnmergeBranches()
+        if (unmergeBranches.isNotEmpty()) {
+            if (showTickets || showCommits) {
+                val branchFrom = MultipleChoice.build(unmergeBranches.filter { !gitSettings.isReleaseBranch(it.target) },
+                    prefix="Unmerge branches")
+
+                if (showCommits) {
+                    echo("Commits: ")
+                    echo(gitInfo.findWorkingCommits(Branch(branchFrom)).withIndex().joinToString("\n"){ (index, value) -> "${index + 1}: $value" })
+                }
+
+                if (showTickets) {
+                    echo("Detected tickets")
+                    echo(gitInfo.findWorkingTickets(Branch(branchFrom)).map { it.name })
+                }
+            }
+
+            unmergeBranches.forEach {
+                val prompt = YesOrNoPrompt("Would you like to merge branch ${it.from} -> ${it.target} ")
+                prompt.main(listOf())
+                if (prompt.answerer) {
+                    gitInfo.mergeBranches(listOf(it))
+                }
             }
         }
     }
